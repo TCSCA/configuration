@@ -30,7 +30,6 @@ build/
 !**/src/test/**/build/
 !**/src/test/**/build/
 aplication.properties
-!**/src/main/java/api/controller/EmailPropertiesController
 
 ### VS Code ###
 .vscode/
