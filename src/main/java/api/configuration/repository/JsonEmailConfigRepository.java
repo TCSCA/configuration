@@ -3,6 +3,8 @@ package api.configuration.repository;
 import api.configuration.model.EmailConfig;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Repository;
 
@@ -11,17 +13,21 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Repository
 public class JsonEmailConfigRepository {
-    public static final String JSON_FILE = "emailConfigs.json";
+    public static final String JSON_FILE = "email-configs.json";
     public List<EmailConfig> emailConfigs = new ArrayList<>();
-    public final ObjectMapper mapper = new ObjectMapper();
+    public final ObjectMapper mapper;
     public Path filePath;
+
+    public JsonEmailConfigRepository() {
+        this.mapper = new ObjectMapper();
+        // ✅ Configurar ObjectMapper para LocalDateTime
+        this.mapper.registerModule(new JavaTimeModule());
+        this.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+    }
 
     @PostConstruct
     public void init() {
@@ -56,6 +62,21 @@ public class JsonEmailConfigRepository {
 
         try {
             this.emailConfigs = mapper.readValue(content, new TypeReference<List<EmailConfig>>() {});
+
+            // Asegurar que todos los registros tengan ID válido
+            boolean needsSave = false;
+            for (EmailConfig config : emailConfigs) {
+                if (config.getId() == null) {
+                    config.setId(generateNewId());
+                    needsSave = true;
+                }
+            }
+
+            // Guardar con IDs si se agregaron algunos
+            if (needsSave) {
+                saveAllEmailConfigs();
+            }
+
             System.out.println("Configuraciones de email leídas correctamente");
 
         } catch (Exception e) {
@@ -65,6 +86,12 @@ public class JsonEmailConfigRepository {
                 // Intentar leer como objeto individual
                 EmailConfig singleConfig = mapper.readValue(content, EmailConfig.class);
                 this.emailConfigs = new ArrayList<>();
+
+                // Asignar ID si es necesario
+                if (singleConfig.getId() == null) {
+                    singleConfig.setId(1L); // Primer ID
+                }
+
                 this.emailConfigs.add(singleConfig);
 
                 saveAllEmailConfigs(); // Convertir a array
@@ -80,8 +107,13 @@ public class JsonEmailConfigRepository {
 
     // Guardar o actualizar configuración de email con actualización parcial
     public void saveEmailConfig(EmailConfig newConfig) throws IOException {
-        // Buscar configuración existente para este email
-        Optional<EmailConfig> existingConfigOpt = findByEmail(newConfig.getEmailConfig());
+        // Generar ID si no existe
+        if (newConfig.getId() == null) {
+            newConfig.setId(generateNewId());
+        }
+
+        // Buscar configuración existente por ID
+        Optional<EmailConfig> existingConfigOpt = findById(newConfig.getId());
 
         EmailConfig configToSave;
 
@@ -97,16 +129,32 @@ public class JsonEmailConfigRepository {
         // Establecer timestamp actual
         configToSave.setLastUpdated(LocalDateTime.now());
 
-        // Eliminar configuración existente
-        emailConfigs.removeIf(config -> config.getEmailConfig().equals(configToSave.getEmailConfig()));
+        // Eliminar configuración existente por ID (manejar caso nulo)
+        emailConfigs.removeIf(config ->
+                config.getId() != null && config.getId().equals(configToSave.getId()));
+
         emailConfigs.add(configToSave);
 
         saveAllEmailConfigs();
     }
 
+    // Generar un nuevo ID único
+    private Long generateNewId() {
+        // Filtrar valores nulos y obtener el máximo ID existente
+        Optional<Long> maxId = emailConfigs.stream()
+                .map(EmailConfig::getId)
+                .filter(Objects::nonNull)
+                .max(Long::compare);
+
+        return maxId.orElse(0L) + 1;
+    }
+
     // Método para hacer merge de configuraciones (actualización parcial)
     private EmailConfig mergeConfigs(EmailConfig existing, EmailConfig updates) {
         EmailConfig merged = new EmailConfig();
+
+        // Mantener el ID original
+        merged.setId(existing.getId());
 
         // Copiar todos los campos existentes
         merged.setClientId(existing.getClientId());
@@ -133,8 +181,8 @@ public class JsonEmailConfigRepository {
         if (updates.getSubject() != null) {
             merged.setSubject(updates.getSubject());
         }
-        // emailConfig no debería cambiar en una actualización
-        if (updates.getEmailConfig() != null && !updates.getEmailConfig().equals(existing.getEmailConfig())) {
+        // Permitir cambio de email
+        if (updates.getEmailConfig() != null) {
             merged.setEmailConfig(updates.getEmailConfig());
         }
 
@@ -151,6 +199,13 @@ public class JsonEmailConfigRepository {
     public Optional<EmailConfig> findByEmail(String email) {
         return emailConfigs.stream()
                 .filter(config -> config.getEmailConfig().equals(email))
+                .findFirst();
+    }
+
+    // Buscar configuración por ID
+    public Optional<EmailConfig> findById(Long id) {
+        return emailConfigs.stream()
+                .filter(config -> config.getId().equals(id))
                 .findFirst();
     }
 
@@ -178,4 +233,21 @@ public class JsonEmailConfigRepository {
         return new ArrayList<>(emailConfigs);
     }
 
+    // Eliminar configuración por ID
+    public boolean deleteById(Long id) throws IOException {
+        boolean removed = emailConfigs.removeIf(config -> config.getId().equals(id));
+        if (removed) {
+            saveAllEmailConfigs();
+        }
+        return removed;
+    }
+
+    // Eliminar configuración por email
+    public boolean deleteByEmail(String email) throws IOException {
+        boolean removed = emailConfigs.removeIf(config -> config.getEmailConfig().equals(email));
+        if (removed) {
+            saveAllEmailConfigs();
+        }
+        return removed;
+    }
 }

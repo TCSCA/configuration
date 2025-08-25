@@ -35,12 +35,12 @@ public class EmailPropertiesController {
     public ResponseEntity<String> sendEmail(@RequestBody EmailCredentialProperties request)
             throws Exception {
 
-        EmailCredentials emailCredentials = new EmailCredentials();
+        EmailCredentialProperties emailCredentials = new EmailCredentialProperties();
         emailCredentials.setClientId(clientId);
         emailCredentials.setClientSecret(clientSecret);
         emailCredentials.setRefreshToken(refreshToken);
-        emailCredentials.setEmail(emailConfig);
-        emailCredentials.setSendTo(request.getEmail());
+        emailCredentials.setEmailConfig(emailConfig);
+        emailCredentials.setSendTo(request.getSendTo());
 
         emailService.sendEmail(
                 emailCredentials

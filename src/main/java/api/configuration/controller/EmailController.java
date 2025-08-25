@@ -2,6 +2,8 @@ package api.configuration.controller;
 
 
 
+import api.configuration.model.EmailConfig;
+import api.configuration.request.EmailCredentialProperties;
 import api.configuration.request.EmailCredentials;
 import api.configuration.service.EmailService;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +22,24 @@ public class EmailController {
 
 
     @PostMapping("/sendEmail")
-    public ResponseEntity<String> sendEmail(@RequestBody EmailCredentials request)
+    public ResponseEntity<String> sendEmail(@RequestBody EmailCredentials emailCredentials)
             throws Exception {
 
+        // Obtener la última configuración de email
+        EmailConfig emailConfig = emailService.getLatestEmailConfig();
 
-        emailService.sendEmail(
-                request
-        );
+        // Crear el objeto de solicitud para enviar el email
+        EmailCredentialProperties sendRequest = new EmailCredentialProperties();
+        sendRequest.setSendTo(emailCredentials.getEmail()); // El email del destinatario
+        sendRequest.setSubject(emailConfig.getSubject());
+        sendRequest.setBody(emailConfig.getBody());
+        sendRequest.setClientId(emailConfig.getClientId());
+        sendRequest.setClientSecret(emailConfig.getClientSecret());
+        sendRequest.setRefreshToken(emailConfig.getRefreshToken());
+        sendRequest.setEmailConfig(emailConfig.getEmailConfig()); // El email del remitente
+
+        // Enviar el email
+        emailService.sendEmail(sendRequest);
 
         return ResponseEntity.ok("Correo enviado exitosamente.");
     }

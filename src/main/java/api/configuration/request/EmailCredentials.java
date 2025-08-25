@@ -1,13 +1,22 @@
 package api.configuration.request;
 
+import java.time.LocalDateTime;
+
 public class EmailCredentials {
 
+    private Long id;
     private String clientId;
     private String clientSecret;
     private String refreshToken;
     private String email;
 
+    private String body;
+
+    private String subject;
+
     private String sendTo;
+
+    private LocalDateTime lastUpdated;
 
 
     public String getClientId() {
@@ -48,5 +57,37 @@ public class EmailCredentials {
 
     public void setSendTo(String sendTo) {
         this.sendTo = sendTo;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(String subject) {
+        this.subject = subject;
+    }
+
+    public LocalDateTime getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(LocalDateTime lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 }
