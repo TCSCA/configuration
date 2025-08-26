@@ -194,7 +194,7 @@ public class EmailService {
                 latestConfig.setFooter(credentials.getFooter());
             }
             // Actualizar email solo si se proporciona uno nuevo
-            if (credentials.getEmailReception() != null){
+            if (credentials.getTitle() != null){
                 latestConfig.setTitle(credentials.getTitle());
             }
             // Actualizar la fecha
