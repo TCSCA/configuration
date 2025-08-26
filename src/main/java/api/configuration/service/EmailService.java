@@ -190,6 +190,13 @@ public class EmailService {
                 latestConfig.setEmailConfig(credentials.getEmail());
             }
 
+            if (credentials.getFooter() != null){
+                latestConfig.setFooter(credentials.getFooter());
+            }
+            // Actualizar email solo si se proporciona uno nuevo
+            if (credentials.getEmailReception() != null){
+                latestConfig.setTitle(credentials.getTitle());
+            }
             // Actualizar la fecha
             latestConfig.setLastUpdated(LocalDateTime.now());
 
