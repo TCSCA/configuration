@@ -14,14 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StreamUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -88,8 +85,15 @@ public class EmailService {
             throw new RuntimeException("No se encontró la plantilla: templates/generalTemplate.html");
         }
 
+        // Leer el contenido de la plantilla
+        String htmlTemplate = new String(Files.readAllBytes(resource.getFile().toPath()));
 
-
+        // Reemplazar los placeholders con los valores reales
+        String processedHtml = htmlTemplate
+                .replace("${body}", credentials.getBody() != null ? credentials.getBody() : "")
+                .replace("$emailReception", credentials.getEmailReception() != null ? credentials.getEmailReception() : "")
+                .replace("$title", credentials.getTitle() != null ? credentials.getTitle() : "")
+                .replace("$footer", credentials.getFooter() != null ? credentials.getFooter() : "");
 
         Properties props = new Properties();
         props.put("mail.smtp.auth.mechanisms", "XOAUTH2");
@@ -110,13 +114,12 @@ public class EmailService {
 
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(credentials.getSendTo()));
         message.setSubject(credentials.getSubject());
-        message.setContent(credentials.getBody(), "text/html; charset=utf-8"); // enviar HTML
+        message.setContent(processedHtml, "text/html; charset=utf-8"); // enviar HTML procesado
 
         SMTPTransport transport = (SMTPTransport) session.getTransport("smtp");
         transport.connect("smtp.gmail.com", credentials.getEmailConfig(), token);
         transport.sendMessage(message, message.getAllRecipients());
         transport.close();
-
     }
 
     public void saveConfig(EmailCredentials credentials) throws Exception {
@@ -129,6 +132,9 @@ public class EmailService {
             emailConfig.setClientSecret(credentials.getClientSecret());
             emailConfig.setRefreshToken(credentials.getRefreshToken());
             emailConfig.setClientId(credentials.getClientId());
+            emailConfig.setEmailReception(credentials.getEmailReception());
+            emailConfig.setTitle(credentials.getTitle());
+            emailConfig.setFooter(credentials.getFooter());
             emailConfig.setLastUpdated(LocalDateTime.now());
 
 
@@ -173,6 +179,10 @@ public class EmailService {
             }
             if (credentials.getClientId() != null) {
                 latestConfig.setClientId(credentials.getClientId());
+            }
+
+            if (credentials.getEmailReception() != null) {
+                latestConfig.setEmailReception(credentials.getEmailReception());
             }
 
             // Actualizar email solo si se proporciona uno nuevo

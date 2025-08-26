@@ -16,6 +16,12 @@ public class EmailCredentials {
 
     private String sendTo;
 
+    private String emailReception;
+
+    private String tittle;
+
+    private String footer;
+
     private LocalDateTime lastUpdated;
 
 
@@ -89,5 +95,29 @@ public class EmailCredentials {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getEmailReception() {
+        return emailReception;
+    }
+
+    public void setEmailReception(String emailReception) {
+        this.emailReception = emailReception;
+    }
+
+    public String getTitle() {
+        return tittle;
+    }
+
+    public void setTitle(String title) {
+        this.tittle = title;
+    }
+
+    public String getFooter() {
+        return footer;
+    }
+
+    public void setFooter(String footer) {
+        this.footer = footer;
     }
 }

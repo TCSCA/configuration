@@ -9,6 +9,11 @@ public class EmailCredentialProperties {
     private String refreshToken;
     private String emailConfig; // email del remitente
 
+    private String title;
+
+    private String footer;
+    private String emailReception;
+
     // Getters y Setters
     public String getSendTo() { return sendTo; }
     public void setSendTo(String sendTo) { this.sendTo = sendTo; }
@@ -30,4 +35,28 @@ public class EmailCredentialProperties {
 
     public String getEmailConfig() { return emailConfig; }
     public void setEmailConfig(String emailConfig) { this.emailConfig = emailConfig; }
+
+    public String getEmailReception() {
+        return emailReception;
+    }
+
+    public void setEmailReception(String emailReception) {
+        this.emailReception = emailReception;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String tittle) {
+        this.title = tittle;
+    }
+
+    public String getFooter() {
+        return footer;
+    }
+
+    public void setFooter(String footer) {
+        this.footer = footer;
+    }
 }

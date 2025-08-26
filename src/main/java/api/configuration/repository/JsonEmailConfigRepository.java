@@ -124,12 +124,23 @@ public class JsonEmailConfigRepository {
         } else {
             // Si no existe, usar la nueva configuración
             configToSave = newConfig;
+
+            // Asegurar que los campos tengan valores por defecto si son nulos
+            if (configToSave.getEmailReception() == null) {
+                configToSave.setEmailReception("");
+            }
+            if (configToSave.getFooter() == null) {
+                configToSave.setFooter(""); // Valor por defecto para footer
+            }
+            if (configToSave.getTitle() == null) {
+                configToSave.setTitle(""); // Valor por defecto para tittle
+            }
         }
 
         // Establecer timestamp actual
         configToSave.setLastUpdated(LocalDateTime.now());
 
-        // Eliminar configuración existente por ID (manejar caso nulo)
+        // Eliminar configuración existente por ID
         emailConfigs.removeIf(config ->
                 config.getId() != null && config.getId().equals(configToSave.getId()));
 
@@ -163,6 +174,9 @@ public class JsonEmailConfigRepository {
         merged.setEmailConfig(existing.getEmailConfig());
         merged.setBody(existing.getBody());
         merged.setSubject(existing.getSubject());
+        merged.setEmailReception(existing.getEmailReception());
+        merged.setFooter(existing.getFooter());
+        merged.setTitle(existing.getTitle());
         merged.setLastUpdated(existing.getLastUpdated());
 
         // Actualizar solo los campos que vienen en el update (no nulos)
@@ -184,6 +198,18 @@ public class JsonEmailConfigRepository {
         // Permitir cambio de email
         if (updates.getEmailConfig() != null) {
             merged.setEmailConfig(updates.getEmailConfig());
+        }
+
+        if (updates.getEmailReception() != null) {
+            merged.setEmailReception(updates.getEmailReception());
+        }
+
+        if (updates.getFooter() != null) {
+            merged.setFooter(updates.getFooter());
+        }
+
+        if (updates.getTitle() != null) {
+            merged.setTitle(updates.getTitle());
         }
 
         return merged;

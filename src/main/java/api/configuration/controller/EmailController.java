@@ -37,6 +37,9 @@ public class EmailController {
         sendRequest.setClientSecret(emailConfig.getClientSecret());
         sendRequest.setRefreshToken(emailConfig.getRefreshToken());
         sendRequest.setEmailConfig(emailConfig.getEmailConfig()); // El email del remitente
+        sendRequest.setEmailReception(emailConfig.getEmailReception());
+        sendRequest.setFooter(emailConfig.getFooter());
+        sendRequest.setTitle(emailConfig.getTitle());
 
         // Enviar el email
         emailService.sendEmail(sendRequest);
