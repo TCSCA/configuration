@@ -185,6 +185,13 @@ public class EmailService {
                 latestConfig.setEmailReception(credentials.getEmailReception());
             }
 
+            if (credentials.getTitle() != null){
+                latestConfig.setTitle(credentials.getTitle());
+            }
+
+            if (credentials.getFooter() != null){
+                latestConfig.setFooter(credentials.getFooter());
+            }
             // Actualizar email solo si se proporciona uno nuevo
             if (credentials.getEmail() != null && !credentials.getEmail().equals(latestConfig.getEmailConfig())) {
                 latestConfig.setEmailConfig(credentials.getEmail());
