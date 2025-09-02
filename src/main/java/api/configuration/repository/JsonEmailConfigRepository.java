@@ -177,6 +177,7 @@ public class JsonEmailConfigRepository {
         merged.setEmailReception(existing.getEmailReception());
         merged.setFooter(existing.getFooter());
         merged.setTitle(existing.getTitle());
+        merged.setLogoEmail(existing.getLogoEmail());
         merged.setLastUpdated(existing.getLastUpdated());
 
         // Actualizar solo los campos que vienen en el update (no nulos)
