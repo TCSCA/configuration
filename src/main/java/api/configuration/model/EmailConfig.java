@@ -20,5 +20,6 @@ public class EmailConfig extends EmailCredentials {
     private String emailReception;
     private String title;
     private String footer;
+    private String logoEmail;
     private LocalDateTime lastUpdated;
 }

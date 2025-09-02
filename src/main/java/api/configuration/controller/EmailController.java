@@ -40,6 +40,7 @@ public class EmailController {
         sendRequest.setEmailReception(emailConfig.getEmailReception());
         sendRequest.setFooter(emailConfig.getFooter());
         sendRequest.setTitle(emailConfig.getTitle());
+        sendRequest.setLogoEmail(emailConfig.getLogoEmail());
 
         // Enviar el email
         emailService.sendEmail(sendRequest);

@@ -18,9 +18,11 @@ public class EmailCredentials {
 
     private String emailReception;
 
-    private String tittle;
+    private String title;
 
     private String footer;
+
+    private String logoEmail;
 
     private LocalDateTime lastUpdated;
 
@@ -106,11 +108,11 @@ public class EmailCredentials {
     }
 
     public String getTitle() {
-        return tittle;
+        return title;
     }
 
     public void setTitle(String title) {
-        this.tittle = title;
+        this.title = title;
     }
 
     public String getFooter() {
@@ -119,5 +121,14 @@ public class EmailCredentials {
 
     public void setFooter(String footer) {
         this.footer = footer;
+    }
+
+
+    public String getLogoEmail() {
+        return logoEmail;
+    }
+
+    public void setLogoEmail(String logoEmail) {
+        this.logoEmail = logoEmail;
     }
 }

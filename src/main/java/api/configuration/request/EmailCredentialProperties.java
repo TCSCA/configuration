@@ -14,6 +14,8 @@ public class EmailCredentialProperties {
     private String footer;
     private String emailReception;
 
+    private String logoEmail;
+
     // Getters y Setters
     public String getSendTo() { return sendTo; }
     public void setSendTo(String sendTo) { this.sendTo = sendTo; }
@@ -58,5 +60,13 @@ public class EmailCredentialProperties {
 
     public void setFooter(String footer) {
         this.footer = footer;
+    }
+
+    public String getLogoEmail() {
+        return logoEmail;
+    }
+
+    public void setLogoEmail(String logoEmail) {
+        this.logoEmail = logoEmail;
     }
 }

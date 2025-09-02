@@ -6,10 +6,15 @@ import api.configuration.request.EmailCredentialProperties;
 import api.configuration.request.EmailCredentials;
 import com.sun.mail.smtp.SMTPTransport;
 import com.sun.mail.util.MailSSLSocketFactory;
-import jakarta.mail.Message;
-import jakarta.mail.Session;
+import jakarta.activation.DataHandler;
+import jakarta.activation.DataSource;
+import jakarta.activation.URLDataSource;
+import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeBodyPart;
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMultipart;
+import jakarta.mail.util.ByteArrayDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.*;
@@ -17,9 +22,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -86,7 +94,7 @@ public class EmailService {
         }
 
         // Leer el contenido de la plantilla
-        String htmlTemplate = new String(Files.readAllBytes(resource.getFile().toPath()));
+        String htmlTemplate = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
 
         // Reemplazar los placeholders con los valores reales
         String processedHtml = htmlTemplate
@@ -102,7 +110,7 @@ public class EmailService {
         props.put("mail.smtp.host", "smtp.gmail.com");
         props.put("mail.smtp.port", "587");
 
-        // ⚡ Confiar en todos los certificados SSL (para desarrollo)
+        // ⚡ Confiar en todos los certificados SSL (solo para desarrollo)
         MailSSLSocketFactory sf = new MailSSLSocketFactory();
         sf.setTrustAllHosts(true);
         props.put("mail.smtp.ssl.socketFactory", sf);
@@ -111,16 +119,28 @@ public class EmailService {
 
         MimeMessage message = new MimeMessage(session);
         message.setFrom(new InternetAddress(credentials.getEmailConfig()));
-
         message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(credentials.getSendTo()));
         message.setSubject(credentials.getSubject());
-        message.setContent(processedHtml, "text/html; charset=utf-8"); // enviar HTML procesado
+
+        // 🔹 Armamos multipart con HTML + Imagen embebida
+        MimeMultipart multipart = new MimeMultipart("related");
+
+        // Parte HTML
+        BodyPart htmlPart = new MimeBodyPart();
+        htmlPart.setContent(processedHtml, "text/html; charset=utf-8");
+        multipart.addBodyPart(htmlPart);
+
+        if (credentials.getLogoEmail() != null && !credentials.getLogoEmail().isEmpty()) {
+            setImageToMail("logo", multipart, credentials.getLogoEmail());
+        }
+        message.setContent(multipart);
 
         SMTPTransport transport = (SMTPTransport) session.getTransport("smtp");
         transport.connect("smtp.gmail.com", credentials.getEmailConfig(), token);
         transport.sendMessage(message, message.getAllRecipients());
         transport.close();
     }
+
 
     public void saveConfig(EmailCredentials credentials) throws Exception {
 
@@ -135,6 +155,7 @@ public class EmailService {
             emailConfig.setEmailReception(credentials.getEmailReception());
             emailConfig.setTitle(credentials.getTitle());
             emailConfig.setFooter(credentials.getFooter());
+            emailConfig.setLogoEmail(credentials.getLogoEmail());
             emailConfig.setLastUpdated(LocalDateTime.now());
 
 
@@ -204,6 +225,10 @@ public class EmailService {
             if (credentials.getTitle() != null){
                 latestConfig.setTitle(credentials.getTitle());
             }
+
+            if (credentials.getLogoEmail() != null){
+                latestConfig.setLogoEmail(credentials.getLogoEmail());
+            }
             // Actualizar la fecha
             latestConfig.setLastUpdated(LocalDateTime.now());
 
@@ -215,6 +240,30 @@ public class EmailService {
         } catch (IOException e) {
             throw new RuntimeException("Error al guardar la configuración: " + e.getMessage(), e);
         }
+    }
+
+
+    private void setImageToMail(String fileName, Multipart multipart, String logo) throws MessagingException, IOException {
+        MimeBodyPart imagePart = new MimeBodyPart();
+
+        if (logo.startsWith("http://") || logo.startsWith("https://")) {
+
+            URL imageUrl = new URL(logo);
+            DataSource dataSource = new URLDataSource(imageUrl);
+            imagePart.setDataHandler(new DataHandler(dataSource));
+        } else {
+
+            if (logo.startsWith("data:")) {
+                logo = logo.substring(logo.indexOf(",") + 1); // limpiar prefijo
+            }
+            byte[] logoBytes = Base64.getDecoder().decode(logo);
+            DataSource fds = new ByteArrayDataSource(logoBytes, "image/png");
+            imagePart.setDataHandler(new DataHandler(fds));
+        }
+
+        imagePart.setHeader("Content-ID", "<" + fileName + ">");
+        imagePart.setDisposition(MimeBodyPart.INLINE);
+        multipart.addBodyPart(imagePart);
     }
 
 
